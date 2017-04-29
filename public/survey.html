@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+
+    <title> Friend Finder</title>
+    <!-- JS -->
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" language="javascript" src="http://propeller.in/components/sidebar/js/sidebar.js"></script>
+    <script type="text/javascript" src="/js/propeller.min.js"></script>
+    <!-- bxSlider Javascript file -->
+    <script src="/js/jquery.bxslider.min.js"></script>
+    <!-- CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <!--Google Icon Font-->
+    <link href="http://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Propeller css -->
+    <link href="/css/propeller.min.css" rel="stylesheet">
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto|Roboto+Slab" rel="stylesheet">
+    <!-- bxSlider CSS file -->
+    <link href="/css/jquery.bxslider.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+    <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+    <!--   <link rel="stylesheet" type="text/css" href="/css/ff.css"> -->
+    <script type="text/javascript" src="/js/ff.js"></script>
+</head>
+
+<body>
+
+
+    <div class="container">
+        <div class="jumbotron">
+            <div class="text-center">
+                <h1> Friend Finder</h1>
+                <h3> Helping you to find a life long friend</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- generate the modal window that will be used when we have returned with a match
+     we will keep it hidden till neeeded -->
+    <div tabindex="-1" class="modal fade" id="form-dialog" style="display: none;" aria-hidden="true">
+        <div class="modal-dialog ">
+            <div class="modal-content">
+                <div class="modal-header pmd-modal-bordered">
+                    <button aria-hidden="true" data-dismiss="modal" class="close" type="button">×</button>
+                    <h2 class="pmd-card-title-text">Friend Finder Match</h2>
+                </div>
+
+                <div id="" class="modal-body" data-bca-user-type="new">
+                    <div>
+                        Match Name:
+                        <span id="match-name"> </span>
+                        <br> Photo Link:
+                        <span id="match-photoLink"> </span>
+                    </div>
+                </div>
+
+                <div class="pmd-modal-action">
+                    <button data-dismiss="modal" id="" class="btn pmd-ripple-effect pmd-btn-flat btn-primary" type="button">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- form used to capture the user entered data for the survey -->
+
+    <form>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">About You</h3>
+            </div>
+            <div class="panel-body">
+                <!-- div for the user name and phone url -->
+                <div id="user-info">
+                    <div class="form-group">
+                        <label for="user-name"> Name (required) </label>
+                        <input type="text" id="user-name">
+                    </div>
+                    <div class="form-group">
+                        <label for="user-photolink"> Link to Photo (required) </label>
+                        <input type="text" id="user-photolink">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- div for the survey information -->
+        <div id="survey-questions">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title"> Survey Questions </h3>
+                </div>
+                <div class="panel-body">
+                    <!-- Place holder for the surver questions -->
+                    <div id="multi-choice" class="form-group">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <!-- submit button for the survey form -->
+        <button type="submit" class="btn btn-primary submit"> Submit Survey </button>
+    </form>
+
+</body>
+
+</html>
+
+<script type="text/javascript">
+    // used to track the number of answers associeated with each questions in the survey.ISSUE if all question dont have the same number of options.
+    var maxqa = 0;
+
+    // Pull the servey data out of the form
+    function getSurveyData() {
+        var surveyData = {
+            name: "",
+            photoLink: "",
+            survey: []
+        };
+
+        surveyData.name = $("#user-name").val().trim();
+        surveyData.photoLink = $("#user-photolink").val().trim();
+        for (var i = 0; i < maxqa; i++) {
+            var v = $('#question-' + i).val();
+            surveyData.survey.push($('#question-' + i).val());
+        }
+        return surveyData;
+    }
+
+    //Pull the survey information from the server and create the html and display to the user
+    function loadSurveyQuestions() {
+        $.ajax({
+            url: "/api/survey",
+            method: "GET"
+        }).done(function(data) {
+            for (var i = 0; i < data.length; i++) {
+                div = $("<div>");
+                var q = $("<p>").text(data[i].question);
+                div.append(q);
+
+                var sel = $("<select>").attr("id", "question-" + i);
+                for (var u = 0; u < data[i].answer.length; u++) {
+                    sel.append($("<option>").attr('value', (u + 1)).text(data[i].answer[u]));
+                }
+                div.append(sel)
+
+                $("#multi-choice").append(div); //
+            }
+
+            maxqa = data.length;
+        });
+    }
+
+    // process the form once the button is clicked
+    $(".submit").on("click", function() {
+        event.preventDefault();
+
+        var surveyData = getSurveyData();
+
+        $.post("/api/friends", surveyData).done(function(data) {
+                console.log(data);
+                $("#match-name").text(data.name);
+                $("#match-photoLink").text(data.photoLink);
+                $("#form-dialog").modal("toggle");
+                $("#bca-userpref-btn_submit").prop("disabled", true);
+            })
+            .fail(function(err) {
+                alert("DXXD");
+            })
+    });
+
+    // automatically load the survey when the page is loaded
+    loadSurveyQuestions();
+
+</script>
